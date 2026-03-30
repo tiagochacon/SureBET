@@ -98,6 +98,27 @@ lucro      = bankroll × margem
 
 Bet365, Betano, Sportingbet, Betfair, KTO, Superbet, Bwin, Pinnacle, William Hill, Unibet
 
+## Plano Gratuito (Free Tier)
+
+O projeto está pré-configurado para funcionar dentro dos limites do **plano gratuito** da The Odds API (500 req/mês).
+
+| Configuração | Valor free tier | Motivo |
+|---|---|---|
+| `POLLING_INTERVAL_SECONDS` | `7200` (2h) | Evitar esgotar cota rapidamente |
+| Ligas monitoradas | 3 | Brasileirão, Premier League, Champions |
+| Req estimadas/mês | ~360 | 3 ligas × 12 polls/dia × 30 dias |
+
+### Como fazer upgrade
+
+Ao assinar um plano pago ([the-odds-api.com](https://the-odds-api.com)), ajuste no `.env`:
+
+```bash
+POLLING_INTERVAL_SECONDS=300   # 5 min — plano Starter (10k req/mês)
+POLLING_INTERVAL_SECONDS=60    # 1 min — plano Pro (30k req/mês)
+```
+
+E adicione mais ligas em `backend/src/config/leagues.ts`.
+
 ## Disclaimer
 
 Este sistema é uma ferramenta de análise. Apostas envolvem risco. Verifique sempre as odds diretamente na casa de apostas antes de realizar qualquer operação.
