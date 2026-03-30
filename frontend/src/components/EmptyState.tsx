@@ -1,11 +1,16 @@
 'use client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useState, useEffect } from 'react';
 import { useStore } from '@/store/useStore';
 
 export function EmptyState() {
   const { systemStatus } = useStore();
-  const now = format(new Date(), 'HH:mm:ss', { locale: ptBR });
+  const [now, setNow] = useState<string | null>(null);
+
+  useEffect(() => {
+    setNow(format(new Date(), 'HH:mm:ss', { locale: ptBR }));
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center py-24 px-6 text-center animate-fade-in">
@@ -28,7 +33,7 @@ export function EmptyState() {
         Quando uma oportunidade for detectada, ela aparecerá aqui instantaneamente.
       </p>
       <p className="font-body text-[13px] text-ds-white-40 mt-4">
-        Última verificação: <span className="text-ds-white">{now}</span>
+        Última verificação: <span className="text-ds-white">{now ?? '--:--:--'}</span>
       </p>
     </div>
   );
