@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { OddsFetcherService } from '../../modules/odds-fetcher/odds-fetcher.service.js';
 import type { OpportunityStore } from '../../modules/opportunity-store/opportunity-store.js';
 import { APPROVED_BOOKMAKERS } from '../../config/bookmakers.js';
-import { MONITORED_LEAGUES, LEAGUE_LABELS } from '../../config/leagues.js';
+import { MONITORED_SPORTS, SPORT_LABELS } from '../../config/sports.js';
 
 export async function statusRoutes(
   fastify: FastifyInstance,
@@ -29,13 +29,14 @@ export async function statusRoutes(
     });
   });
 
-  /** GET /api/v1/leagues */
-  fastify.get('/leagues', async (_request, reply) => {
+  /** GET /api/v1/sports */
+  fastify.get('/sports', async (_request, reply) => {
     return reply.send({
-      leagues: MONITORED_LEAGUES.map((slug) => ({
+      sports: MONITORED_SPORTS.map((slug) => ({
         slug,
-        label: LEAGUE_LABELS[slug] ?? slug,
+        label: SPORT_LABELS[slug] ?? slug,
       })),
+      total: MONITORED_SPORTS.length,
     });
   });
 }

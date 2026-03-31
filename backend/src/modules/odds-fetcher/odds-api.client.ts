@@ -1,6 +1,9 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
 import axiosRetry from 'axios-retry';
-import type { OddsApiEvent } from '../../types/index.js';
+import type {
+  OddsApiV3ArbitrageOpportunity,
+  OddsApiV3Event,
+} from '../../types/index.js';
 import { logger } from '../../server.js';
 
 export class OddsApiError extends Error {
@@ -14,18 +17,10 @@ export class OddsApiError extends Error {
   }
 }
 
-export interface OddsApiFetchOptions {
-  regions?: string;
-  markets?: string;
-  oddsFormat?: 'decimal' | 'american';
-  dateFormat?: 'iso' | 'unix';
-}
-
 export class OddsApiClient {
   private readonly http: AxiosInstance;
   private readonly apiKey: string;
   private remainingRequests: number | null = null;
-  private usedRequests: number | null = null;
 
   constructor() {
     const apiKey = process.env.ODDS_API_KEY;
@@ -37,83 +32,162 @@ export class OddsApiClient {
     this.apiKey = apiKey;
 
     this.http = axios.create({
-      baseURL: process.env.ODDS_API_BASE_URL ?? 'https://api.the-odds-api.com',
+      baseURL: process.env.ODDS_API_BASE_URL ?? 'https://api.odds-api.io/v3',
       timeout: 15_000,
-      headers: { 'Accept': 'application/json' },
+      headers: { Accept: 'application/json' },
     });
 
-    // Retry com backoff exponencial — apenas em erros de rede, nunca em 401/422
+    // Retry com backoff exponencial — nunca em 401/403/429
     axiosRetry(this.http, {
       retries: 3,
       retryDelay: axiosRetry.exponentialDelay,
       retryCondition: (error: AxiosError) => {
         const status = error.response?.status;
-        // Não tentar novamente em erros de autenticação ou rate limit
-        if (status === 401 || status === 429 || status === 422) return false;
+        if (status === 401 || status === 403 || status === 429) return false;
         return axiosRetry.isNetworkOrIdempotentRequestError(error);
       },
       onRetry: (retryCount, error) => {
-        logger.warn({ retryCount, url: error.config?.url }, 'Tentando novamente chamada à API de odds');
+        logger.warn(
+          { retryCount, url: error.config?.url },
+          'Tentando novamente chamada à odds-api.io',
+        );
       },
     });
 
-    // Interceptor para capturar headers de quota
+    // Capturar headers de rate limit se disponíveis
     this.http.interceptors.response.use((response) => {
-      const remaining = response.headers['x-requests-remaining'];
-      const used = response.headers['x-requests-used'];
-      if (remaining) this.remainingRequests = Number(remaining);
-      if (used) this.usedRequests = Number(used);
+      const remaining =
+        response.headers['x-ratelimit-remaining'] ??
+        response.headers['x-requests-remaining'];
+      if (remaining !== undefined) {
+        this.remainingRequests = Number(remaining);
+      }
       return response;
     });
   }
 
-  /** Busca odds de uma liga específica */
-  async getOddsForLeague(
-    leagueSlug: string,
-    options: OddsApiFetchOptions = {},
-  ): Promise<OddsApiEvent[]> {
+  /**
+   * MÉTODO PRINCIPAL — retorna todas as oportunidades de arbitragem entre
+   * os bookmakers selecionados em TODOS os esportes e TODOS os mercados.
+   * 1 único request cobre toda a cobertura disponível.
+   */
+  async getArbitrageBets(
+    bookmakers: string[],
+    limit = 500,
+  ): Promise<OddsApiV3ArbitrageOpportunity[]> {
     const params = {
       apiKey: this.apiKey,
-      regions: options.regions ?? 'eu,us,uk',
-      markets: options.markets ?? 'h2h,totals,btts',
-      oddsFormat: options.oddsFormat ?? 'decimal',
-      dateFormat: options.dateFormat ?? 'iso',
+      bookmakers: bookmakers.join(','),
+      limit,
+      includeEventDetails: true,
     };
 
     try {
-      logger.debug({ leagueSlug, params: { ...params, apiKey: '[REDACTED]' } }, 'Buscando odds');
-      const response = await this.http.get<OddsApiEvent[]>(
-        `/v4/sports/${leagueSlug}/odds`,
+      logger.debug(
+        { bookmakers, limit },
+        'Buscando oportunidades de arbitragem via /arbitrage-bets',
+      );
+
+      const response = await this.http.get<OddsApiV3ArbitrageOpportunity[]>(
+        '/arbitrage-bets',
         { params },
+      );
+
+      logger.info(
+        { count: response.data.length },
+        'Oportunidades de arbitragem recebidas da API',
+      );
+
+      return response.data;
+    } catch (err) {
+      throw this.handleError(err, '/arbitrage-bets');
+    }
+  }
+
+  /**
+   * Busca eventos de um esporte específico.
+   * Uso secundário — o /arbitrage-bets já cobre todos os esportes.
+   */
+  async getEvents(sport: string): Promise<OddsApiV3Event[]> {
+    try {
+      const response = await this.http.get<OddsApiV3Event[]>('/events', {
+        params: { sport, apiKey: this.apiKey },
+      });
+      return response.data;
+    } catch (err) {
+      throw this.handleError(err, `/events?sport=${sport}`);
+    }
+  }
+
+  /**
+   * Busca odds de até 10 eventos em 1 único request.
+   * Eficiente para monitoramento de eventos específicos.
+   */
+  async getOddsMulti(
+    eventIds: number[],
+    bookmakers: string[],
+  ): Promise<OddsApiV3Event[]> {
+    try {
+      const response = await this.http.get<OddsApiV3Event[]>('/odds/multi', {
+        params: {
+          eventIds: eventIds.join(','),
+          bookmakers: bookmakers.join(','),
+          apiKey: this.apiKey,
+        },
+      });
+      return response.data;
+    } catch (err) {
+      throw this.handleError(err, '/odds/multi');
+    }
+  }
+
+  /**
+   * Lista todos os esportes disponíveis na API.
+   * Este endpoint não requer autenticação.
+   */
+  async getSports(): Promise<{ name: string; slug: string }[]> {
+    try {
+      const response = await this.http.get<{ name: string; slug: string }[]>(
+        '/sports',
       );
       return response.data;
     } catch (err) {
-      const axiosErr = err as AxiosError<{ message?: string }>;
-      const status = axiosErr.response?.status;
-      const msg = axiosErr.response?.data?.message ?? axiosErr.message;
+      throw this.handleError(err, '/sports');
+    }
+  }
 
-      if (status === 401) {
-        throw new OddsApiError('API Key inválida ou expirada', 401);
-      }
-      if (status === 429) {
-        throw new OddsApiError('Rate limit da The Odds API atingido', 429, true);
-      }
-      if (status === 422) {
-        throw new OddsApiError(`Liga não encontrada ou inválida: ${leagueSlug}`, 422);
-      }
+  private handleError(err: unknown, endpoint: string): OddsApiError {
+    const axiosErr = err as AxiosError<{ error?: string }>;
+    const status = axiosErr.response?.status;
+    const msg = axiosErr.response?.data?.error ?? axiosErr.message;
 
-      throw new OddsApiError(
-        `Erro ao buscar odds para ${leagueSlug}: ${msg}`,
+    if (status === 401 || status === 403) {
+      return new OddsApiError(
+        `API Key inválida ou sem permissão (${endpoint})`,
         status,
       );
     }
+    if (status === 429) {
+      return new OddsApiError(
+        `Rate limit da odds-api.io atingido (100 req/hora). Aguardando próximo ciclo.`,
+        429,
+        true,
+      );
+    }
+    if (status !== undefined && status >= 500) {
+      return new OddsApiError(
+        `Erro interno da odds-api.io (${status}) em ${endpoint}`,
+        status,
+      );
+    }
+
+    return new OddsApiError(
+      `Erro ao chamar ${endpoint}: ${msg}`,
+      status,
+    );
   }
 
   get remainingApiRequests(): number | null {
     return this.remainingRequests;
-  }
-
-  get usedApiRequests(): number | null {
-    return this.usedRequests;
   }
 }

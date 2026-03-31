@@ -27,11 +27,11 @@ export class NotificationService {
     this.emit<{ id: string }>('opportunity:expired', { id });
   }
 
-  notifyNoOpportunities(monitored: number, leagues: number): void {
+  notifyNoOpportunities(monitored: number, sports: number): void {
     this.emit('system:no_opportunities', {
       message: 'Nenhuma oportunidade de arbitragem no momento',
       eventsMonitored: monitored,
-      leaguesMonitored: leagues,
+      sportsMonitored: sports,
     });
   }
 

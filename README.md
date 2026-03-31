@@ -11,14 +11,14 @@ Backend API (Fastify + TypeScript)
     ↕               ↕
 Redis Cache    PostgreSQL
     ↕
-The Odds API
+odds-api.io (/arbitrage-bets)
 ```
 
 ## Pré-requisitos
 
 - Node.js 20+
 - Docker + Docker Compose
-- Chave de API: [The Odds API](https://the-odds-api.com)
+- Chave de API: [odds-api.io](https://odds-api.io)
 
 ## Setup
 
@@ -66,11 +66,11 @@ npm test
 
 | Módulo | Responsabilidade |
 |--------|-----------------|
-| `OddsFetcher` | Busca odds da API a cada 60s por liga configurada |
-| `ArbitrageDetector` | Detecta oportunidades calculando `sum(1/odd) < 1` |
-| `StakeCalculator` | Calcula `stake_i = bankroll × (1/odd_i) / Σ(1/odd_j)` |
+| `OddsFetcher` | Busca oportunidades via `/arbitrage-bets` (1 req/min) |
 | `OpportunityStore` | Gerencia TTL e estado das oportunidades em memória |
 | `NotificationService` | Push de oportunidades via WebSocket |
+
+> **Nota:** Com a odds-api.io, o `ArbitrageDetector` não é necessário no pipeline principal — o endpoint `/arbitrage-bets` retorna oportunidades já detectadas pela API nativa.
 
 ## Fórmula de Arbitragem
 
@@ -96,36 +96,36 @@ lucro      = bankroll × margem
 
 ## Casas de apostas aprovadas
 
-Bet365, Betano, Sportingbet, Betfair, KTO, Superbet, Bwin, Pinnacle, William Hill, Unibet
+| Casa | Licença | Confiabilidade |
+|------|---------|----------------|
+| Bet365 | UKGC / Malta MGA | ⭐⭐⭐⭐⭐ |
+| Betano | Malta MGA | ⭐⭐⭐⭐⭐ |
 
 ## Plano Gratuito (Free Tier)
 
-O projeto está pré-configurado para funcionar dentro dos limites do **plano gratuito** da The Odds API (500 req/mês), com cobertura máxima possível.
+O projeto está pré-configurado para funcionar dentro dos limites do **plano gratuito** da [odds-api.io](https://odds-api.io) (100 req/hora).
 
-| Configuração | Valor free tier | Motivo |
+| Configuração | Valor | Motivo |
 |---|---|---|
-| `POLLING_INTERVAL_SECONDS` | `86400` (24h) | 1 poll/dia — máximo viável no plano free |
-| `ODDS_API_REGIONS` | `eu,uk` | Regiões com mais bookmakers de futebol |
-| Ligas monitoradas | **15** | Máximo com 1 poll/dia (15 × 30 = 450 req) |
-| Bookmakers aprovados | **20** | Slugs verificados na The Odds API |
-| Req estimadas/mês | **450** | Margem de segurança: 50 req |
+| API utilizada | `odds-api.io` | Endpoint nativo de arbitragem |
+| `POLLING_INTERVAL_SECONDS` | `60` (1 min) | 60 req/hora — abaixo do limite de 100 |
+| `ODDS_CACHE_TTL_SECONDS` | `55` | Cache ligeiramente menor que o intervalo |
+| Bookmakers | **Bet365 + Betano** | 2 das maiores casas globais |
+| Esportes cobertos | **32** (todos disponíveis) | `/arbitrage-bets` cobre tudo em 1 request |
+| Mercados cobertos | **Todos** (ML, Over/Under, BTTS, Double Chance, Handicap...) | Nenhuma configuração extra necessária |
+| Req estimadas/hora | **~60** | Margem de segurança: 40 req/hora |
 
-### Ligas cobertas
+### Vantagem do endpoint `/arbitrage-bets`
 
-Brasileirão A e B, Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Champions League, Europa League, Libertadores, Sul-Americana, Primera División (ARG), Primeira Liga (POR), Eredivisie, Süper Lig.
+Diferente de buscar odds por liga (que exigiria dezenas de requests), o endpoint `/arbitrage-bets` retorna **todas** as oportunidades de arbitragem entre Bet365 e Betano em **um único request**, cobrindo automaticamente todos os 32 esportes e todos os mercados disponíveis.
 
-### Bookmakers integrados
+### Esportes cobertos
 
-Pinnacle, William Hill, Betfair Exchange (EU/UK), Betfair Sportsbook, Unibet (UK/FR/IT/NL), Betsson, Marathon Bet, Matchbook, NordicBet, 888sport, Paddy Power, Sky Bet, Ladbrokes, Coral, Bet Victor, Smarkets.
+Futebol, Basquete, Tênis, Beisebol, Futebol Americano, Hóquei no Gelo, E-sports, Dardos, MMA, Boxe, Handebol, Vôlei, Snooker, Tênis de Mesa, Rúgbi, Críquete, Polo Aquático, Futsal, Vôlei de Praia, Futebol Australiano, Floorball, Squash, Futebol de Praia, Lacrosse, Curling, Padel, Bandy, Futebol Gaélico, Handebol de Praia, Atletismo, Badminton, Golfe.
 
 ### Como fazer upgrade
 
-Ao assinar um plano pago ([the-odds-api.com](https://the-odds-api.com)), ajuste no `.env`:
-
-```bash
-POLLING_INTERVAL_SECONDS=300   # 5 min — plano Starter (10k req/mês)
-POLLING_INTERVAL_SECONDS=60    # 1 min — plano Pro (30k req/mês)
-```
+Ao assinar um plano pago ([odds-api.io](https://odds-api.io)), o sistema já está otimizado — o único ajuste possível é reduzir o intervalo abaixo de 60s se o plano permitir mais de 100 req/hora.
 
 ## Disclaimer
 

@@ -18,7 +18,6 @@ export const logger = pino({
 async function bootstrap(): Promise<void> {
   // Importações lazy para garantir que logger está disponível
   const { OddsFetcherService } = await import('./modules/odds-fetcher/odds-fetcher.service.js');
-  const { ArbitrageDetector } = await import('./modules/arbitrage/arbitrage-detector.js');
   const { OpportunityStore } = await import('./modules/opportunity-store/opportunity-store.js');
   const { NotificationService } = await import('./modules/notification/notification.service.js');
   const { opportunitiesRoutes } = await import('./api/routes/opportunities.js');
@@ -31,7 +30,7 @@ async function bootstrap(): Promise<void> {
   const httpServer = createServer();
 
   const fastify = Fastify({
-    logger: false, // usamos pino diretamente
+    logger: false,
     serverFactory: (handler) => {
       httpServer.on('request', handler);
       return httpServer;
@@ -67,26 +66,21 @@ async function bootstrap(): Promise<void> {
   });
 
   // Instanciar módulos
+  // Nota: ArbitrageDetector não é mais necessário no pipeline principal —
+  // a odds-api.io já detecta arbitragem nativamente via /arbitrage-bets.
   const fetcher = new OddsFetcherService();
-  const detector = new ArbitrageDetector();
   const store = new OpportunityStore();
   const notifier = new NotificationService(io);
 
-  // Pipeline: OddsFetcher → ArbitrageDetector → OpportunityStore → NotificationService
-  const DEFAULT_BANKROLL = 100;
-
-  fetcher.onNewData(async (events) => {
-    const opportunities = detector.detectAll(events, DEFAULT_BANKROLL);
-
+  // Pipeline: OddsFetcher (/arbitrage-bets) → OpportunityStore → NotificationService
+  // As oportunidades chegam já detectadas e prontas pela API.
+  fetcher.onArbitrageReady(async (opportunities) => {
     // Limpar expiradas
     const expiredIds = store.cleanExpired();
     expiredIds.forEach((id) => notifier.notifyExpiredOpportunity(id));
 
     if (opportunities.length === 0) {
-      notifier.notifyNoOpportunities(
-        events.length,
-        new Set(events.map((e) => e.league)).size,
-      );
+      notifier.notifyNoOpportunities(0, 0);
       return;
     }
 
