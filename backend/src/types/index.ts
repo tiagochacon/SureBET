@@ -70,8 +70,8 @@ export interface BookmakerConfig {
   name: string;
   license: string;
   reliability: number;  // 1-5
-  availableInBrazil: boolean;
-  minStake?: number;    // stake mínimo em R$
+  region: string;       // região da The Odds API (ex: 'eu', 'uk', 'eu,uk')
+  minStake?: number;
   note?: string;
 }
 

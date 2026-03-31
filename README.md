@@ -100,13 +100,23 @@ Bet365, Betano, Sportingbet, Betfair, KTO, Superbet, Bwin, Pinnacle, William Hil
 
 ## Plano Gratuito (Free Tier)
 
-O projeto está pré-configurado para funcionar dentro dos limites do **plano gratuito** da The Odds API (500 req/mês).
+O projeto está pré-configurado para funcionar dentro dos limites do **plano gratuito** da The Odds API (500 req/mês), com cobertura máxima possível.
 
 | Configuração | Valor free tier | Motivo |
 |---|---|---|
-| `POLLING_INTERVAL_SECONDS` | `7200` (2h) | Evitar esgotar cota rapidamente |
-| Ligas monitoradas | 3 | Brasileirão, Premier League, Champions |
-| Req estimadas/mês | ~360 | 3 ligas × 12 polls/dia × 30 dias |
+| `POLLING_INTERVAL_SECONDS` | `86400` (24h) | 1 poll/dia — máximo viável no plano free |
+| `ODDS_API_REGIONS` | `eu,uk` | Regiões com mais bookmakers de futebol |
+| Ligas monitoradas | **15** | Máximo com 1 poll/dia (15 × 30 = 450 req) |
+| Bookmakers aprovados | **20** | Slugs verificados na The Odds API |
+| Req estimadas/mês | **450** | Margem de segurança: 50 req |
+
+### Ligas cobertas
+
+Brasileirão A e B, Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Champions League, Europa League, Libertadores, Sul-Americana, Primera División (ARG), Primeira Liga (POR), Eredivisie, Süper Lig.
+
+### Bookmakers integrados
+
+Pinnacle, William Hill, Betfair Exchange (EU/UK), Betfair Sportsbook, Unibet (UK/FR/IT/NL), Betsson, Marathon Bet, Matchbook, NordicBet, 888sport, Paddy Power, Sky Bet, Ladbrokes, Coral, Bet Victor, Smarkets.
 
 ### Como fazer upgrade
 
@@ -116,8 +126,6 @@ Ao assinar um plano pago ([the-odds-api.com](https://the-odds-api.com)), ajuste 
 POLLING_INTERVAL_SECONDS=300   # 5 min — plano Starter (10k req/mês)
 POLLING_INTERVAL_SECONDS=60    # 1 min — plano Pro (30k req/mês)
 ```
-
-E adicione mais ligas em `backend/src/config/leagues.ts`.
 
 ## Disclaimer
 

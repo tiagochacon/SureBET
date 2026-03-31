@@ -1,4 +1,3 @@
-import cron from 'node-cron';
 import { OddsApiClient, OddsApiError } from './odds-api.client.js';
 import { getBookmakerConfig, APPROVED_SLUGS } from '../../config/bookmakers.js';
 import { MONITORED_LEAGUES, getLeagueLabel } from '../../config/leagues.js';
@@ -21,7 +20,7 @@ export class OddsFetcherService {
   private lastSuccessfulFetch: Date | null = null;
   private nextScheduledFetch: Date | null = null;
   private eventsCount = 0;
-  private cronJob: cron.ScheduledTask | null = null;
+  private cronJob: ReturnType<typeof setTimeout> | null = null;
 
   // Callbacks para notificar quando novos dados chegam
   private onNewDataCallbacks: Array<(events: SportEvent[]) => void> = [];
@@ -41,21 +40,27 @@ export class OddsFetcherService {
 
   /** Inicia o polling agendado */
   start(): void {
-    const intervalSeconds = Number(process.env.POLLING_INTERVAL_SECONDS ?? 60);
-    const cronExpression = `*/${intervalSeconds} * * * * *`;
+    const intervalSeconds = Number(process.env.POLLING_INTERVAL_SECONDS ?? 86400);
 
     logger.info({ intervalSeconds }, 'OddsFetcherService iniciado');
 
     // Fetch imediato ao iniciar
     void this.fetchAll();
 
-    this.cronJob = cron.schedule(cronExpression, async () => {
-      await this.fetchAll();
-    });
+    // Agendar próximos fetches via setTimeout recursivo
+    // (mais flexível que cron para intervalos longos como 24h)
+    const scheduleNext = (): void => {
+      this.cronJob = setTimeout(async () => {
+        await this.fetchAll();
+        scheduleNext();
+      }, intervalSeconds * 1000) as unknown as cron.ScheduledTask;
+    };
+
+    scheduleNext();
   }
 
   stop(): void {
-    this.cronJob?.stop();
+    if (this.cronJob !== null) clearTimeout(this.cronJob);
     logger.info('OddsFetcherService parado');
   }
 
@@ -66,7 +71,7 @@ export class OddsFetcherService {
       return [];
     }
 
-    this.nextScheduledFetch = new Date(Date.now() + Number(process.env.POLLING_INTERVAL_SECONDS ?? 60) * 1000);
+    this.nextScheduledFetch = new Date(Date.now() + Number(process.env.POLLING_INTERVAL_SECONDS ?? 86400) * 1000);
 
     const allEvents: SportEvent[] = [];
     let hasError = false;
@@ -108,7 +113,9 @@ export class OddsFetcherService {
       return cached;
     }
 
-    const rawEvents = await this.client.getOddsForLeague(leagueSlug);
+    const rawEvents = await this.client.getOddsForLeague(leagueSlug, {
+      regions: process.env.ODDS_API_REGIONS ?? 'eu,uk',
+    });
     const normalized = rawEvents.map((e) => this.normalizeEvent(e, leagueSlug));
 
     // Persistir snapshots para auditoria

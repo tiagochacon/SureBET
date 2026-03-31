@@ -62,5 +62,6 @@ export interface BookmakerConfig {
   name: string;
   license: string;
   reliability: number;
-  availableInBrazil: boolean;
+  region: string;
+  note?: string;
 }
