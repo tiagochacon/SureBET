@@ -183,6 +183,7 @@ export class OddsFetcherService {
       id: raw.id || uuidv4(),
       eventId: String(raw.eventId),
       eventName,
+      sport: raw.event?.sport ?? '',
       league: raw.event?.league ?? '',
       commenceTime: raw.event?.date ? new Date(raw.event.date) : new Date(),
       marketType: this.mapMarketType(raw.market.name),

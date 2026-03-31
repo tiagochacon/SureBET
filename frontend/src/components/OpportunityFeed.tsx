@@ -4,13 +4,13 @@ import { OpportunityCard } from './OpportunityCard';
 import { EmptyState } from './EmptyState';
 
 export function OpportunityFeed() {
-  const { opportunities, bankroll, minMargin, marketFilter, leagueFilter } = useStore();
+  const { opportunities, bankroll, minMargin, marketFilter, sportFilter } = useStore();
 
   const filtered = opportunities
     .filter((o) => o.status === 'active' || o.status === 'stale')
     .filter((o) => o.arbitrageMargin >= minMargin)
     .filter((o) => !marketFilter || o.marketType === marketFilter)
-    .filter((o) => !leagueFilter || o.league.toLowerCase().includes(leagueFilter.toLowerCase()));
+    .filter((o) => !sportFilter || o.sport === sportFilter);
 
   if (filtered.length === 0) return <EmptyState />;
 

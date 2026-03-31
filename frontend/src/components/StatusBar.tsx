@@ -35,9 +35,9 @@ export function StatusBar() {
 
       <span className="text-ds-border-2">·</span>
 
-      {/* Ligas */}
+      {/* Esportes */}
       <span className="text-ds-white-40">
-        <span className="text-ds-white">{systemStatus?.leaguesMonitored ?? '—'}</span> ligas
+        <span className="text-ds-white">{systemStatus?.sportsMonitored ?? 32}</span> esportes
       </span>
 
       <span className="text-ds-border-2">·</span>

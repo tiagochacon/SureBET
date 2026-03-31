@@ -27,9 +27,8 @@ export function EmptyState() {
       </h3>
       <p className="font-body text-[15px] text-ds-white-40 max-w-md leading-relaxed">
         Monitorando{' '}
-        <span className="text-ds-white">{systemStatus?.eventsMonitored ?? '—'} jogos</span>{' '}
-        em{' '}
-        <span className="text-ds-white">{systemStatus?.leaguesMonitored ?? '—'} ligas</span>.
+        <span className="text-ds-white">{systemStatus?.sportsMonitored ?? 32} esportes</span>{' '}
+        via Bet365 e Betano.
         Quando uma oportunidade for detectada, ela aparecerá aqui instantaneamente.
       </p>
       <p className="font-body text-[13px] text-ds-white-40 mt-4">

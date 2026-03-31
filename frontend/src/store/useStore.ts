@@ -26,8 +26,8 @@ interface SureBetStore {
   setMinMargin: (v: number) => void;
   marketFilter: string;
   setMarketFilter: (v: string) => void;
-  leagueFilter: string;
-  setLeagueFilter: (v: string) => void;
+  sportFilter: string;
+  setSportFilter: (v: string) => void;
 
   // UI
   wsConnected: boolean;
@@ -64,20 +64,19 @@ export const useStore = create<SureBetStore>()(
       setMinMargin: (v) => set({ minMargin: v }),
       marketFilter: '',
       setMarketFilter: (v) => set({ marketFilter: v }),
-      leagueFilter: '',
-      setLeagueFilter: (v) => set({ leagueFilter: v }),
+      sportFilter: '',
+      setSportFilter: (v) => set({ sportFilter: v }),
 
       wsConnected: false,
       setWsConnected: (v) => set({ wsConnected: v }),
     }),
     {
       name: 'surebet-storage',
-      // Persistir apenas preferências do usuário, não dados em tempo real
       partialize: (state) => ({
         bankroll: state.bankroll,
         minMargin: state.minMargin,
         marketFilter: state.marketFilter,
-        leagueFilter: state.leagueFilter,
+        sportFilter: state.sportFilter,
       }),
     },
   ),

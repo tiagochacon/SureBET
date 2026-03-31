@@ -3,11 +3,13 @@ import { useStore } from '@/store/useStore';
 import { clsx } from 'clsx';
 
 const MARKET_OPTIONS = [
-  { value: '', label: 'Todos os mercados' },
-  { value: 'h2h', label: '1X2' },
-  { value: 'totals', label: 'Over/Under' },
-  { value: 'btts', label: 'Ambos Marcam' },
+  { value: '',              label: 'Todos' },
+  { value: 'h2h',           label: '1X2' },
+  { value: 'totals',        label: 'Over/Under' },
+  { value: 'btts',          label: 'Ambos Marcam' },
   { value: 'double_chance', label: 'Chance Dupla' },
+  { value: 'handicap',      label: 'Handicap' },
+  { value: 'spread',        label: 'Spread' },
 ];
 
 export function FilterBar() {

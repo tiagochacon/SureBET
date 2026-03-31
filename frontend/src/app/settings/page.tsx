@@ -2,40 +2,29 @@
 import { useStore } from '@/store/useStore';
 import { clsx } from 'clsx';
 
-const LEAGUES = [
-  { slug: 'soccer_brazil_campeonato', label: 'Brasileirão Série A' },
-  { slug: 'soccer_epl', label: 'Premier League' },
-  { slug: 'soccer_spain_la_liga', label: 'La Liga' },
-  { slug: 'soccer_germany_bundesliga', label: 'Bundesliga' },
-  { slug: 'soccer_italy_serie_a', label: 'Serie A' },
-  { slug: 'soccer_france_ligue_one', label: 'Ligue 1' },
-  { slug: 'soccer_uefa_champs_league', label: 'Champions League' },
-  { slug: 'soccer_conmebol_libertadores', label: 'Copa Libertadores' },
+const SPORTS = [
+  { slug: 'football',          label: 'Futebol' },
+  { slug: 'basketball',        label: 'Basquete' },
+  { slug: 'tennis',            label: 'Tênis' },
+  { slug: 'baseball',          label: 'Beisebol' },
+  { slug: 'american-football', label: 'Fut. Americano' },
+  { slug: 'ice-hockey',        label: 'Hóquei no Gelo' },
+  { slug: 'esports',           label: 'E-sports' },
+  { slug: 'darts',             label: 'Dardos' },
+  { slug: 'mixed-martial-arts',label: 'MMA' },
+  { slug: 'boxing',            label: 'Boxe' },
+  { slug: 'handball',          label: 'Handebol' },
+  { slug: 'volleyball',        label: 'Vôlei' },
+  { slug: 'snooker',           label: 'Snooker' },
+  { slug: 'table-tennis',      label: 'Tênis de Mesa' },
+  { slug: 'rugby',             label: 'Rúgbi' },
+  { slug: 'cricket',           label: 'Críquete' },
+  { slug: 'futsal',            label: 'Futsal' },
+  { slug: 'golf',              label: 'Golfe' },
 ];
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={clsx(
-        'relative w-10 h-5 rounded-full transition-colors duration-200',
-        checked ? 'bg-ds-blue' : 'bg-ds-surface-4 border border-ds-border',
-      )}
-    >
-      <span
-        className={clsx(
-          'absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200',
-          checked ? 'translate-x-5' : 'translate-x-0',
-        )}
-      />
-    </button>
-  );
-}
-
 export default function SettingsPage() {
-  const { bankroll, setBankroll, minMargin, setMinMargin, leagueFilter, setLeagueFilter } = useStore();
+  const { bankroll, setBankroll, minMargin, setMinMargin, sportFilter, setSportFilter } = useStore();
 
   function handleBankrollChange(e: React.ChangeEvent<HTMLInputElement>) {
     const v = parseFloat(e.target.value);
@@ -97,39 +86,62 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Ligas */}
+        {/* Filtro de Esporte */}
         <section className="rounded-card border border-ds-border bg-ds-surface p-5 shadow-card">
-          <h2 className="font-heading text-[17px] text-ds-white mb-1">Filtro de Liga</h2>
+          <h2 className="font-heading text-[17px] text-ds-white mb-1">Filtro de Esporte</h2>
           <p className="font-body text-[13px] text-ds-white-40 mb-4">
-            Filtrar oportunidades por liga específica. Deixe em branco para ver todas.
+            Filtrar oportunidades por esporte. A API cobre 32 esportes automaticamente via Bet365 e Betano.
           </p>
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setLeagueFilter('')}
+              onClick={() => setSportFilter('')}
               className={clsx(
                 'px-3 py-1.5 rounded-full font-body text-[13px] border transition-all duration-200',
-                leagueFilter === ''
+                sportFilter === ''
                   ? 'bg-ds-blue/20 border-ds-blue text-ds-blue'
                   : 'border-ds-border text-ds-white-40 hover:border-ds-border-2 hover:text-ds-white',
               )}
             >
-              Todas
+              Todos
             </button>
-            {LEAGUES.map((l) => (
+            {SPORTS.map((s) => (
               <button
-                key={l.slug}
-                onClick={() => setLeagueFilter(l.label)}
+                key={s.slug}
+                onClick={() => setSportFilter(s.slug)}
                 className={clsx(
                   'px-3 py-1.5 rounded-full font-body text-[13px] border transition-all duration-200',
-                  leagueFilter === l.label
+                  sportFilter === s.slug
                     ? 'bg-ds-blue/20 border-ds-blue text-ds-blue'
                     : 'border-ds-border text-ds-white-40 hover:border-ds-border-2 hover:text-ds-white',
                 )}
               >
-                {l.label}
+                {s.label}
               </button>
             ))}
           </div>
+        </section>
+
+        {/* Casas de Apostas */}
+        <section className="rounded-card border border-ds-border bg-ds-surface p-5 shadow-card">
+          <h2 className="font-heading text-[17px] text-ds-white mb-1">Casas de Apostas</h2>
+          <p className="font-body text-[13px] text-ds-white-40 mb-4">
+            Bookmakers ativos no sistema. Oportunidades são detectadas apenas entre estas duas casas.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {['Bet365', 'Betano'].map((bm) => (
+              <div
+                key={bm}
+                className="flex items-center gap-2 px-4 py-2 rounded-card border border-ds-green/40 bg-ds-green/5"
+              >
+                <span className="w-2 h-2 rounded-full bg-ds-green" />
+                <span className="font-body text-[14px] text-ds-white">{bm}</span>
+                <span className="font-body text-[11px] text-ds-white-40">ativo</span>
+              </div>
+            ))}
+          </div>
+          <p className="font-body text-[11px] text-ds-white-40 mt-3">
+            API: odds-api.io · Polling: 60s · ~60 req/hora (limite: 100)
+          </p>
         </section>
 
         {/* Disclaimer */}

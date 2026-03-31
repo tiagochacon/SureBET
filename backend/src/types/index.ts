@@ -54,6 +54,7 @@ export interface ArbitrageOpportunity {
   id: string;
   eventId: string;
   eventName: string;       // ex: 'Flamengo vs Corinthians'
+  sport: string;           // ex: 'football', 'basketball', 'tennis'
   league: string;
   commenceTime: Date;
   marketType: MarketType;

@@ -1,5 +1,14 @@
-export type MarketType = 'h2h' | 'totals' | 'btts' | 'double_chance';
+export type MarketType =
+  | 'h2h'
+  | 'totals'
+  | 'btts'
+  | 'double_chance'
+  | 'handicap'
+  | 'spread'
+  | 'other';
+
 export type OpportunityStatus = 'active' | 'stale' | 'expired' | 'invalidated';
+
 export type WsEventType =
   | 'opportunity:new'
   | 'opportunity:updated'
@@ -25,6 +34,7 @@ export interface ArbitrageOpportunity {
   id: string;
   eventId: string;
   eventName: string;
+  sport: string;        // ex: 'football', 'basketball', 'tennis'
   league: string;
   commenceTime: string;
   marketType: MarketType;
@@ -45,10 +55,11 @@ export interface SystemStatus {
   lastSuccessfulFetch: string | null;
   nextScheduledFetch: string | null;
   eventsMonitored: number;
-  leaguesMonitored: number;
+  sportsMonitored: number;
   activeOpportunities: number;
   apiCallsRemaining: number | null;
   consecutiveErrors: number;
+  bookmakers?: string[];
 }
 
 export interface WsMessage<T = unknown> {
