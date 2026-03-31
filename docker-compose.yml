@@ -47,9 +47,10 @@ services:
       DATABASE_URL: postgresql://surebet:surebet_secret@postgres:5432/surebet_db
       REDIS_URL: redis://redis:6379
       ODDS_API_KEY: ${ODDS_API_KEY}
-      ODDS_API_BASE_URL: https://api.the-odds-api.com
+      ODDS_API_BASE_URL: https://api.odds-api.io/v3
+      ODDS_API_BOOKMAKERS: Bet365,Betano
       POLLING_INTERVAL_SECONDS: 60
-      ODDS_CACHE_TTL_SECONDS: 90
+      ODDS_CACHE_TTL_SECONDS: 55
       MIN_ARBITRAGE_MARGIN: 0.005
       MIN_MINUTES_TO_GAME: 5
     ports:
