@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="bg-ds-bg text-ds-white font-body antialiased min-h-screen">
+      <body className="bg-ds-bg text-ds-white font-body antialiased min-h-screen" suppressHydrationWarning>
         <WebSocketProvider>
           <Navbar />
           <main className="pt-14">{children}</main>

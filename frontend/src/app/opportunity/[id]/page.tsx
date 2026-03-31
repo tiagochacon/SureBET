@@ -9,8 +9,13 @@ import type { ArbitrageOpportunity } from '@/types';
 import { clsx } from 'clsx';
 
 function OddsAgeAlert({ fetchedAt }: { fetchedAt: string }) {
-  const ageSeconds = differenceInSeconds(new Date(), new Date(fetchedAt));
-  if (ageSeconds < 60) return null;
+  const [ageSeconds, setAgeSeconds] = useState<number | null>(null);
+
+  useEffect(() => {
+    setAgeSeconds(differenceInSeconds(new Date(), new Date(fetchedAt)));
+  }, [fetchedAt]);
+
+  if (ageSeconds === null || ageSeconds < 60) return null;
 
   return (
     <div className="flex items-center gap-2 rounded-btn-sm border border-ds-yellow/30 bg-ds-yellow/10 px-3 py-2 text-[12px]">
